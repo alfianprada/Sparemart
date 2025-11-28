@@ -1,7 +1,12 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kasir/src/screens/customers.dart';
+import 'package:kasir/src/screens/dashboard.dart';
+import 'package:kasir/src/screens/report.dart';
+import 'package:kasir/src/screens/sales.dart';
 import '../services/supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProdukPage extends StatefulWidget {
   final bool isAdmin;
@@ -9,16 +14,37 @@ class ProdukPage extends StatefulWidget {
 
   @override
   State<ProdukPage> createState() => _ProdukPageState();
+
 }
 
 class _ProdukPageState extends State<ProdukPage> {
   List<Map<String, dynamic>> produk = [];
   bool loading = true;
 
+
+  String username = "User";
+
   @override
   void initState() {
     super.initState();
     loadProducts();
+    loadUser();
+
+  }
+
+  Future<void> loadUser() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final profile = await Supabase.instance.client
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+      setState(() {
+        username = profile['full_name'] ?? "User";
+      });
+    }
   }
 
   Future<void> loadProducts() async {
@@ -98,43 +124,162 @@ class _ProdukPageState extends State<ProdukPage> {
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Data Produk"),
-        actions: [
-          if (widget.isAdmin)
-            IconButton(icon: const Icon(Icons.add), onPressed: () => addOrEdit()),
+      bottomNavigationBar: BottomNavigationBar(
+      selectedItemColor: Colors.amber,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        currentIndex: 1,
+        onTap: (index) {
+            switch (index) {
+              case 0:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DashboardPage()),
+                );
+                break;
+              case 1:
+                return;
+              case 2:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PelangganPage()),
+                );
+                break;
+              case 3:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TransaksiPage()),
+                );
+                break;
+              case 4:
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReportPage()),
+                );
+                break;
+            }
+          },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Produk"),
+          BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
+          BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: "Laporan"),
         ],
       ),
+
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF074A86),
+      elevation: 0,
+      title: Row(
+        children: [
+          Image.asset("images/sparemart_logo.png", height: 42),
+          const SizedBox(width: 8),
+          const Text("Produk",
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const Spacer(),
+          Text("Halo, $username",
+              style: const TextStyle(fontSize: 13, color: Colors.white70)),
+          IconButton(
+            onPressed: () async {
+              await Supabase.instance.client.auth.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+            icon: const Icon(Icons.logout, color: Colors.white),
+          ),
+        ],
+      ),
+      ),
       body: GridView.builder(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.8),
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.72,
+        ),
         itemCount: produk.length,
         itemBuilder: (context, i) {
           final p = produk[i];
-          return Card(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Image.network(p['image_url'] ?? '',
-                      width: double.infinity, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.image)),
+
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ✅ GAMBAR PRODUK DARI SUPABASE STORAGE
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.network(
+                    p['image_url'] ?? '',
+                    height: 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 120,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.image, size: 40),
+                    ),
+                  ),
+                ),
+
                 Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(p['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text('Rp ${p['price']}'),
-                      Text('Stok: ${p['stock']}'),
+                      Text(
+                        p['name'],
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        'stok: ${p['stock']}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        'Rp.${p['price']}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+
                       if (widget.isAdmin)
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            IconButton(icon: const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => addOrEdit(item: p)),
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => deleteProduct(p['id'])),
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                              onPressed: () => addOrEdit(item: p),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                              onPressed: () => deleteProduct(p['id']),
+                            ),
                           ],
                         ),
                     ],

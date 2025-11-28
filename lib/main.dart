@@ -29,19 +29,7 @@ class KasirApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/dashboard',
-      routes: {
-        '/login': (context) => const LoginScreen(),
-    '/dashboard': (context) => const DashboardPage(),
-
-    // === Tambahkan semua halaman yang kamu pakai ===
-    '/produk': (context) => const ProdukPage(),
-    '/pelanggan': (context) => const PelangganPage(),
-    '/kasir': (context) => const TransaksiPage(),
-    '/gudang': (context) => const GudangPage(),
-    '/laporan': (context) => const ReportPage(),
-      },
+      debugShowCheckedModeBanner: false
     );
   }
 }

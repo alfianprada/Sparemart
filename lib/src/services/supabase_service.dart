@@ -88,6 +88,23 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 
+  // ==============================
+  // PELANGGAN
+  // ==============================
+  static Future<List<Map<String, dynamic>>> getCustomers() async {
+    try {
+      final res = await client
+          .from('customers') // ✅ pastikan nama tabel ini benar
+          .select('*')
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print("Error getCustomers: $e");
+      return [];
+    }
+  }
+
   // ------------------------------
   // LOGIN ASLI SUPABASE AUTH
   // ------------------------------

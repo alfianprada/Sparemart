@@ -1,5 +1,9 @@
 // lib/src/screens/dashboard_page.dart
 import 'package:flutter/material.dart';
+import 'package:kasir/src/screens/customers.dart';
+import 'package:kasir/src/screens/produk_form_page.dart';
+import 'package:kasir/src/screens/report.dart';
+import 'package:kasir/src/screens/sales.dart';
 import 'package:kasir/src/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -113,25 +117,38 @@ class DashboardAdminUI extends StatelessWidget {
   void _onNavTap(BuildContext context, int index) {
   switch (index) {
     case 0:
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
       break;
     case 1:
-      Navigator.pushReplacementNamed(context, '/produk');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProdukPage(isAdmin: true)),
+      );
       break;
     case 2:
-      Navigator.pushReplacementNamed(context, '/pelanggan');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PelangganPage()),
+      );
       break;
     case 3:
-      Navigator.pushReplacementNamed(context, '/kasir');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const TransaksiPage()),
+      );
       break;
     case 4:
-      Navigator.pushReplacementNamed(context, '/gudang');
-      break;
-    case 5:
-      Navigator.pushReplacementNamed(context, '/laporan');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ReportPage()),
+      );
       break;
   }
 }
+
 
 
   const DashboardAdminUI({
@@ -402,25 +419,38 @@ class DashboardKasirUI extends StatelessWidget {
   void _onNavTap(BuildContext context, int index) {
   switch (index) {
     case 0:
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
       break;
     case 1:
-      Navigator.pushReplacementNamed(context, '/produk');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ProdukPage(isAdmin: false)),
+      );
       break;
     case 2:
-      Navigator.pushReplacementNamed(context, '/pelanggan');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PelangganPage()),
+      );
       break;
     case 3:
-      Navigator.pushReplacementNamed(context, '/kasir');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const TransaksiPage()),
+      );
       break;
     case 4:
-      Navigator.pushReplacementNamed(context, '/gudang');
-      break;
-    case 5:
-      Navigator.pushReplacementNamed(context, '/laporan');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ReportPage()),
+      );
       break;
   }
 }
+
 
 
   const DashboardKasirUI({
