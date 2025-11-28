@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kasir/src/screens/customers.dart';
+import 'package:kasir/src/screens/gudang.dart';
 import 'dashboard.dart';
 import 'produk_form_page.dart';
 import 'report.dart';
@@ -102,6 +103,12 @@ class _TransaksiPageState extends State<TransaksiPage> {
             case 4:
               Navigator.pushReplacement(
                 context,
+                MaterialPageRoute(builder: (_) => const GudangPage()),
+              );
+              break;
+            case 5:
+              Navigator.pushReplacement(
+                context,
                 MaterialPageRoute(builder: (_) => const ReportPage()),
               );
               break;
@@ -112,6 +119,7 @@ class _TransaksiPageState extends State<TransaksiPage> {
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Sparepart"),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
           BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
+          BottomNavigationBarItem(icon: Icon(Icons.home_work),label: "Gudang"),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: "Laporan"),
         ],
       ),

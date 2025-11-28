@@ -1,6 +1,7 @@
 // lib/src/screens/dashboard_page.dart
 import 'package:flutter/material.dart';
 import 'package:kasir/src/screens/customers.dart';
+import 'package:kasir/src/screens/gudang.dart';
 import 'package:kasir/src/screens/produk_form_page.dart';
 import 'package:kasir/src/screens/report.dart';
 import 'package:kasir/src/screens/sales.dart';
@@ -141,6 +142,12 @@ class DashboardAdminUI extends StatelessWidget {
       );
       break;
     case 4:
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const GudangPage()),
+      );
+      break;
+    case 5:
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ReportPage()),

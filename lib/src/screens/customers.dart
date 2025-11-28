@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kasir/src/screens/gudang.dart';
 import '../services/supabase_service.dart';
 import 'dashboard.dart';
 import 'produk_form_page.dart';
@@ -112,6 +113,12 @@ class _PelangganPageState extends State<PelangganPage> {
             case 4:
               Navigator.pushReplacement(
                 context,
+                MaterialPageRoute(builder: (_) => const GudangPage()),
+              );
+              break;
+            case 5:
+              Navigator.pushReplacement(
+                context,
                 MaterialPageRoute(builder: (_) => const ReportPage()),
               );
               break;
@@ -122,6 +129,7 @@ class _PelangganPageState extends State<PelangganPage> {
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Sparepart"),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
           BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
+          BottomNavigationBarItem(icon: Icon(Icons.home_work),label: "Gudang"),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: "Laporan"),
         ],
       ),

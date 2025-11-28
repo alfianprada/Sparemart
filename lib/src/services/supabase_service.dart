@@ -105,6 +105,16 @@ class SupabaseService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getStokGudang() async {
+  final res = await Supabase.instance.client
+      .from('products')
+      .select('name, stock')
+      .order('name');
+
+  return List<Map<String, dynamic>>.from(res);
+}
+
+
   // ------------------------------
   // LOGIN ASLI SUPABASE AUTH
   // ------------------------------

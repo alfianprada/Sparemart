@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kasir/src/screens/customers.dart';
 import 'package:kasir/src/screens/dashboard.dart';
+import 'package:kasir/src/screens/gudang.dart';
 import 'package:kasir/src/screens/report.dart';
 import 'package:kasir/src/screens/sales.dart';
 import '../services/supabase_service.dart';
@@ -152,6 +153,12 @@ class _ProdukPageState extends State<ProdukPage> {
                 );
                 break;
               case 4:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const GudangPage()),
+              );
+              break;
+              case 5:
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const ReportPage()),
@@ -164,6 +171,7 @@ class _ProdukPageState extends State<ProdukPage> {
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Produk"),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
           BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
+          BottomNavigationBarItem(icon: Icon(Icons.home_work),label: "Gudang"),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: "Laporan"),
         ],
       ),
