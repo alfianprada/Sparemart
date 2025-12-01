@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kasir/src/screens/customers.dart';
 import 'package:kasir/src/screens/sales.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import 'dashboard.dart';
 import 'produk_form_page.dart';
@@ -125,11 +124,9 @@ class _GudangPageState extends State<GudangPage> {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2), label: "Sparepart"),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Sparepart"),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.point_of_sale), label: "Kasir"),
+          BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: "Gudang"),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: "Laporan"),
         ],

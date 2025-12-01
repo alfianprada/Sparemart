@@ -1,10 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kasir/src/screens/customers.dart';
-import 'package:kasir/src/screens/dashboard.dart';
-import 'package:kasir/src/screens/login.dart';
-import 'package:kasir/src/screens/produk_form_page.dart';
-import 'package:kasir/src/screens/report.dart';
-import 'package:kasir/src/screens/sales.dart';
 import 'package:kasir/src/screens/splash.dart';
 import 'src/services/supabase_service.dart';
 

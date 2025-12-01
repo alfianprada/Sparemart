@@ -78,14 +78,18 @@ class SupabaseService {
 
 
   // Transaksi terbaru
-  Future<List<Map<String, dynamic>>> getRecentTransactions(int limit) async {
+  Future<List<Map<String, dynamic>>> getRecentTransactions([int limit = 50]) async {
+    try {
     final response = await client
         .from('transactions')
-        .select('*')
-        .order('created_at', ascending: false)
-        .limit(limit);
+        .select('id, transaction_number, total, discount, payment_method,created_at')
+        .order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print("ERROR getRecentTrannsactions: $e");
+      return[];
+    }
   }
 
   // ==============================
@@ -113,6 +117,26 @@ class SupabaseService {
 
   return List<Map<String, dynamic>>.from(res);
 }
+
+Future<double> getTotalSalesAllTime() async {
+  final res = await client.from('transactions').select('total');
+
+  double total = 0;
+  for (var item in res) {
+    total += (item['total'] as num).toDouble();
+  }
+  return total;
+}
+
+Future<List<Map<String, dynamic>>> getAllTransactions() async {
+  final res = await client
+      .from('transactions')
+      .select('*')
+      .order('created_at', ascending: false);
+
+  return List<Map<String, dynamic>>.from(res);
+}
+
 
 
   // ------------------------------
