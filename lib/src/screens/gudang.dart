@@ -5,6 +5,8 @@ import '../services/supabase_service.dart';
 import 'dashboard.dart';
 import 'produk_form_page.dart';
 import 'report.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class GudangPage extends StatefulWidget {
   const GudangPage({super.key});
@@ -18,10 +20,74 @@ class _GudangPageState extends State<GudangPage> {
   List dataStok = [];
   bool isLoading = true;
 
+  String username = "User";
+
   @override
   void initState() {
     super.initState();
     loadStok();
+    loadUser();
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    // tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+}
+
+  Future<void> loadUser() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final profile = await Supabase.instance.client
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+      setState(() {
+        username = profile['full_name'] ?? "User";
+      });
+    }
   }
 
   Future<void> loadStok() async {
@@ -40,16 +106,26 @@ class _GudangPageState extends State<GudangPage> {
       // ======================
       appBar: AppBar(
         backgroundColor: const Color(0xFF074A86),
-        title: const Text(
-          "Gudang",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        elevation: 0,
+        title: Row(
+          children: [
+            Image.asset("images/sparemart_logo.png", height: 90),
+            const SizedBox(width: 8),
+            const Text(
+              "Gudang",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            Text(
+              "Halo, $username",
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
+            ),
+            IconButton(
+  onPressed: () => _confirmLogout(context),
+  icon: const Icon(Icons.logout, color: Colors.white),
+),
+          ],
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.logout),
-          )
-        ],
       ),
 
       // ======================
@@ -127,7 +203,7 @@ class _GudangPageState extends State<GudangPage> {
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Sparepart"),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
           BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: "Gudang"),
+          BottomNavigationBarItem(icon: Icon(Icons.home_work),label: "Gudang"),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: "Laporan"),
         ],
       ),

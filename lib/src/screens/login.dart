@@ -14,63 +14,93 @@ class _LoginScreenState extends State<LoginScreen> {
   final passCtrl = TextEditingController();
   bool loading = false;
 
+  void showErrorPopup(String message) {
+  if (!mounted) return;
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Login Gagal"),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("OK"),
+        ),
+      ],
+    ),
+  );
+}
+
+
   Future<void> login() async {
-    if (emailCtrl.text.isEmpty || passCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email dan password wajib diisi")),
-      );
+  final email = emailCtrl.text.trim();
+  final password = passCtrl.text.trim();
+
+  // ✅ 1. VALIDASI EMAIL KOSONG
+  if (email.isEmpty) {
+    showErrorPopup("Email tidak boleh kosong");
+    return;
+  }
+
+  // ✅ 2. VALIDASI PASSWORD KOSONG
+  if (password.isEmpty) {
+    showErrorPopup("Password tidak boleh kosong");
+    return;
+  }
+
+  // ✅ 3. VALIDASI FORMAT EMAIL
+  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+  if (!emailRegex.hasMatch(email)) {
+    showErrorPopup("Format email tidak valid");
+    return;
+  }
+
+  setState(() => loading = true);
+
+  try {
+    final supabase = Supabase.instance.client;
+
+    // ✅ 4. LOGIN AUTH (SUPABASE YANG MENENTUKAN SALAH ATAU BENAR)
+    final res = await supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+
+    if (res.user == null) {
+      showErrorPopup("Email atau password salah");
+      setState(() => loading = false);
       return;
     }
 
-    setState(() => loading = true);
+    final uid = res.user!.id;
 
-    try {
-      final supabase = Supabase.instance.client;
+    // ✅ 5. AMBIL PROFIL USER
+    final profile = await supabase
+        .from('user_profiles')
+        .select()
+        .eq('id', uid)
+        .maybeSingle();
 
-      // LOGIN AUTH
-      final res = await supabase.auth.signInWithPassword(
-        email: emailCtrl.text.trim(),
-        password: passCtrl.text.trim(),
-      );
+    final role = profile?['role'] ?? 'kasir';
 
-      if (res.user == null) {
-        throw AuthException("Email atau password salah");
-      }
+    if (!mounted) return;
 
-      final uid = res.user!.id;
-
-      // AMBIL PROFIL USER
-      final profile = await supabase
-          .from('user_profiles')
-          .select()
-          .eq('id', uid)
-          .maybeSingle();
-
-      final role = profile?['role'] ?? 'kasir';
-
-      if (!mounted) return;
-
-      // PINDAH DASHBOARD
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => DashboardPage()),
-      );
-    } on PostgrestException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
-    } on AuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login error: $e")),
-      );
-    }
-
-    setState(() => loading = false);
+    // ✅ 6. PINDAH DASHBOARD
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => DashboardPage()),
+    );
+  } on AuthException catch (e) {
+    showErrorPopup("Email atau password salah");
+  } catch (e) {
+    showErrorPopup("Login error: $e");
   }
+
+  setState(() => loading = false);
+}
+
+
 
   @override
   Widget build(BuildContext context) {

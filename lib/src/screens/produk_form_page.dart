@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kasir/src/screens/customers.dart';
 import 'package:kasir/src/screens/dashboard.dart';
 import 'package:kasir/src/screens/gudang.dart';
+import 'package:kasir/src/screens/produk_input.dart';
 import 'package:kasir/src/screens/report.dart';
 import 'package:kasir/src/screens/sales.dart';
 import '../services/supabase_service.dart';
@@ -32,6 +33,52 @@ class _ProdukPageState extends State<ProdukPage> {
     loadUser();
 
   }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    // tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+}
 
   Future<void> loadUser() async {
     final user = Supabase.instance.client.auth.currentUser;
@@ -116,10 +163,31 @@ class _ProdukPageState extends State<ProdukPage> {
     );
   }
 
-  Future<void> deleteProduct(int id) async {
+  Future<void> deleteProductConfirm(int id) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Hapus Produk"),
+      content: const Text("Yakin ingin menghapus produk ini?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text("Batal"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text("Hapus"),
+        ),
+      ],
+    ),
+  );
+
+  if (result == true) {
     await SupabaseService.deleteProduct(id);
     loadProducts();
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +236,7 @@ class _ProdukPageState extends State<ProdukPage> {
           },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Produk"),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Sparepart"),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: "Pelanggan"),
           BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: "Kasir"),
           BottomNavigationBarItem(icon: Icon(Icons.home_work),label: "Gudang"),
@@ -181,23 +249,32 @@ class _ProdukPageState extends State<ProdukPage> {
       elevation: 0,
       title: Row(
         children: [
-          Image.asset("images/sparemart_logo.png", height: 42),
+          Image.asset("images/sparemart_logo.png", height: 90),
           const SizedBox(width: 8),
-          const Text("Produk",
+          const Text("Sparepart",
               style: TextStyle(fontWeight: FontWeight.bold)),
           const Spacer(),
           Text("Halo, $username",
               style: const TextStyle(fontSize: 13, color: Colors.white70)),
           IconButton(
-            onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            icon: const Icon(Icons.logout, color: Colors.white),
-          ),
+  onPressed: () => _confirmLogout(context),
+  icon: const Icon(Icons.logout),
+),
         ],
       ),
       ),
+      floatingActionButton: widget.isAdmin
+      ? FloatingActionButton(
+        backgroundColor: Colors.amberAccent,
+            onPressed: () async {
+  final result = await Navigator.pushNamed(context, '/produk-form');
+  if (result == true) {
+    loadProducts(); // ✅ AUTO REFRESH SETELAH TAMBAH
+  }
+          },
+          child: const Icon(Icons.add),
+        )
+      : null,
       body: GridView.builder(
         padding: const EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -282,11 +359,23 @@ class _ProdukPageState extends State<ProdukPage> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                              onPressed: () => addOrEdit(item: p),
+                              onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProdukFormPage(product: p),
+                                ),
+                              );
+
+                              if (result == true) {
+                                loadProducts(); // ✅ auto refresh
+                              }
+                            },
+
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                              onPressed: () => deleteProduct(p['id']),
+                              onPressed: () => deleteProductConfirm(p['id']),
                             ),
                           ],
                         ),

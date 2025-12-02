@@ -115,6 +115,52 @@ class DashboardAdminUI extends StatelessWidget {
   final List<double> weeklySales;
   final List<Map<String, dynamic>> recentTrans;
   final Future<void> Function() onRefresh;
+  Future<void> _confirmLogout(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    // tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+}
+
   void _onNavTap(BuildContext context, int index) {
   switch (index) {
     case 0:
@@ -213,7 +259,7 @@ class DashboardAdminUI extends StatelessWidget {
       elevation: 0,
       title: Row(
         children: [
-          Image.asset("images/sparemart_logo.png", height: 42),
+          Image.asset("images/sparemart_logo.png", height: 90),
           const SizedBox(width: 8),
           const Text("Dashboard",
               style: TextStyle(fontWeight: FontWeight.bold)),
@@ -221,12 +267,9 @@ class DashboardAdminUI extends StatelessWidget {
           Text("Halo, $username",
               style: const TextStyle(fontSize: 13, color: Colors.white70)),
           IconButton(
-            onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-            icon: const Icon(Icons.logout, color: Colors.white),
-          ),
+  onPressed: () => _confirmLogout(context),
+  icon: const Icon(Icons.logout, color: Colors.white),
+),
         ],
       ),
     );
@@ -423,6 +466,51 @@ class DashboardKasirUI extends StatelessWidget {
   final List<double> weeklySales;
   final List<Map<String, dynamic>> recentTrans;
   final Future<void> Function() onRefresh;
+  Future<void> _confirmLogout(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    // tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+}
   void _onNavTap(BuildContext context, int index) {
   switch (index) {
     case 0:
@@ -474,18 +562,30 @@ class DashboardKasirUI extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Dashboard"),
-        backgroundColor: const Color(0xFF074A86),
-        actions: [
-          Center(child: Text("Halo, $username   ", style: const TextStyle(fontSize: 14, color: Colors.white70))),
+      backgroundColor: const Color(0xFF074A86),
+        elevation: 0,
+        title: Row(
+          children: [
+            Image.asset("images/sparemart_logo.png", height: 90),
+            const SizedBox(width: 8),
+            const Text(
+              "Gudang",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            Text(
+              "Halo, $username",
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
+            ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          )
+  icon: const Icon(Icons.logout, color: Colors.white),
+  onPressed: () => _confirmLogout(context),
+)
+
+
+
         ],
+      ),
       ),
       body: RefreshIndicator(
         onRefresh: onRefresh,

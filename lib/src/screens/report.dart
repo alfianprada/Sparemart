@@ -5,7 +5,7 @@ import 'package:kasir/src/screens/gudang.dart';
 import 'package:kasir/src/screens/produk_form_page.dart';
 import 'package:kasir/src/screens/sales.dart';
 import '../services/supabase_service.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -23,10 +23,74 @@ class _ReportPageState extends State<ReportPage> {
   double totalPendapatan = 0;
   bool isLoading = true;
 
+  String username = "User";
+
   @override
   void initState() {
     super.initState();
     loadLaporan();
+    loadUser();
+  }
+
+  Future<void> _confirmLogout(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    // tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+}
+
+  Future<void> loadUser() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      final profile = await Supabase.instance.client
+          .from('user_profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+      setState(() {
+        username = profile['full_name'] ?? "User";
+      });
+    }
   }
 
   Future<void> loadLaporan() async {
@@ -124,16 +188,26 @@ class _ReportPageState extends State<ReportPage> {
       // ======================
       appBar: AppBar(
         backgroundColor: const Color(0xFF074A86),
-        title: const Text(
-          "Laporan",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        elevation: 0,
+        title: Row(
+          children: [
+            Image.asset("images/sparemart_logo.png", height: 90),
+            const SizedBox(width: 8),
+            const Text(
+              "Laporan",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            Text(
+              "Halo, $username",
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
+            ),
+            IconButton(
+  onPressed: () => _confirmLogout(context),
+  icon: const Icon(Icons.logout, color: Colors.white),
+),
+          ],
         ),
-        actions: [
-          IconButton(
-            onPressed: exportPdf,
-            icon: const Icon(Icons.picture_as_pdf),
-          )
-        ],
       ),
 
       // ======================
@@ -249,8 +323,7 @@ class _ReportPageState extends State<ReportPage> {
               icon: Icon(Icons.group), label: "Pelanggan"),
           BottomNavigationBarItem(
               icon: Icon(Icons.point_of_sale), label: "Kasir"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.store), label: "Gudang"),
+          BottomNavigationBarItem(icon: Icon(Icons.home_work),label: "Gudang"),
           BottomNavigationBarItem(
               icon: Icon(Icons.receipt), label: "Laporan"),
         ],

@@ -261,4 +261,17 @@ Future<List<Map<String, dynamic>>> getAllTransactions() async {
       return null;
     }
   }
+
+  static Future<void> addCustomer(Map<String, dynamic> data) async {
+  await Supabase.instance.client.from('customers').insert(data);
+}
+
+static Future<void> updateCustomer(int id, Map<String, dynamic> data) async {
+  await Supabase.instance.client.from('customers').update(data).eq('id', id);
+}
+
+static Future<void> deleteCustomer(int id) async {
+  await Supabase.instance.client.from('customers').delete().eq('id', id);
+}
+
 }

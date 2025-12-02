@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:kasir/src/screens/dashboard.dart';
+import 'package:kasir/src/screens/login.dart';
+import 'package:kasir/src/screens/produk_input.dart';
 import 'package:kasir/src/screens/splash.dart';
 import 'src/services/supabase_service.dart';
 
@@ -23,7 +26,13 @@ class KasirApp extends StatelessWidget {
         ),
       ),
       home: const SplashScreen(),
-      debugShowCheckedModeBanner: false
+      debugShowCheckedModeBanner: false,
+      routes: {
+  '/login': (context) => const LoginScreen(),
+  '/dashboard': (context) => const DashboardPage(),
+  '/produk-form': (context) => const ProdukFormPage()
+},
+
     );
   }
 }

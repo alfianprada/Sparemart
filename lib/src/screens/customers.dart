@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kasir/src/screens/gudang.dart';
+import 'package:kasir/src/screens/pelanggan_form.dart';
 import '../services/supabase_service.dart';
 import 'dashboard.dart';
 import 'produk_form_page.dart';
@@ -26,6 +27,141 @@ class _PelangganPageState extends State<PelangganPage> {
     loadUser();
     loadPelanggan();
   }
+
+  Future<void> addOrEditCustomer({Map<String, dynamic>? item}) async {
+  final nameCtrl = TextEditingController(text: item?['name'] ?? '');
+  final phoneCtrl = TextEditingController(text: item?['phone'] ?? '');
+  final addressCtrl = TextEditingController(text: item?['address'] ?? '');
+
+  await showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(item == null ? "Tambah Pelanggan" : "Edit Pelanggan"),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: "Nama"),
+            ),
+            TextField(
+              controller: phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: "No HP"),
+            ),
+            TextField(
+              controller: addressCtrl,
+              decoration: const InputDecoration(labelText: "Alamat"),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Batal"),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (nameCtrl.text.isEmpty) return;
+
+            final data = {
+              'name': nameCtrl.text,
+              'phone': phoneCtrl.text,
+              'address': addressCtrl.text,
+            };
+
+            if (item == null) {
+              await SupabaseService.addCustomer(data); // ✅ TAMBAH
+            } else {
+              await SupabaseService.updateCustomer(item['id'], data); // ✅ EDIT
+            }
+
+            if (mounted) {
+              Navigator.pop(context);
+              loadPelanggan(); // ✅ AUTO REFRESH
+            }
+          },
+          child: const Text("Simpan"),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<void> deleteCustomerConfirm(int id) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Hapus Pelanggan"),
+      content: const Text("Yakin ingin menghapus pelanggan ini?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text("Batal"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text("Hapus"),
+        ),
+      ],
+    ),
+  );
+
+  if (result == true) {
+    await SupabaseService.deleteCustomer(id);
+    loadPelanggan(); // ✅ AUTO REFRESH
+  }
+}
+
+
+
+  Future<void> _confirmLogout(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text("Konfirmasi Logout"),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Logout"),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (result == true) {
+    // tampilkan loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+}
 
   Future<void> loadUser() async {
     final user = Supabase.instance.client.auth.currentUser;
@@ -73,12 +209,22 @@ class _PelangganPageState extends State<PelangganPage> {
     return Scaffold(
       // ✅ FLOATING BUTTON +
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.amber,
-        onPressed: () {
-          // nanti bisa kamu isi ke form tambah pelanggan
-        },
-        child: const Icon(Icons.add, color: Colors.black),
+  backgroundColor: Colors.amber,
+  onPressed: () async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PelangganFormPage(),
       ),
+    );
+
+    if (result == true) {
+      loadPelanggan(); // ✅ AUTO REFRESH
+    }
+  },
+  child: const Icon(Icons.add, color: Colors.black),
+),
+
 
       // ✅ BOTTOM NAVIGATION
       bottomNavigationBar: BottomNavigationBar(
@@ -140,7 +286,7 @@ class _PelangganPageState extends State<PelangganPage> {
         elevation: 0,
         title: Row(
           children: [
-            Image.asset("images/sparemart_logo.png", height: 40),
+            Image.asset("images/sparemart_logo.png", height: 90),
             const SizedBox(width: 8),
             const Text(
               "Pelanggan",
@@ -152,12 +298,9 @@ class _PelangganPageState extends State<PelangganPage> {
               style: const TextStyle(fontSize: 13, color: Colors.white70),
             ),
             IconButton(
-              onPressed: () async {
-                await Supabase.instance.client.auth.signOut();
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-              icon: const Icon(Icons.logout, color: Colors.white),
-            ),
+  onPressed: () => _confirmLogout(context),
+  icon: const Icon(Icons.logout, color: Colors.white),
+),
           ],
         ),
       ),
@@ -184,38 +327,60 @@ class _PelangganPageState extends State<PelangganPage> {
               ],
             ),
             child: Row(
-              children: [
-                // ✅ AVATAR BULAT
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: getAvatarColor(i),
-                ),
+  children: [
+    CircleAvatar(
+      radius: 22,
+      backgroundColor: getAvatarColor(i),
+    ),
 
-                const SizedBox(width: 12),
+    const SizedBox(width: 12),
 
-                // ✅ NAMA & NO HP
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (p['name'] ?? 'Tanpa Nama').toString(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      (p['phone'] ?? '-').toString(),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                )
-              ],
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            (p['name'] ?? 'Tanpa Nama').toString(),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            (p['phone'] ?? '-').toString(),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    ),
+
+    IconButton(
+  icon: const Icon(Icons.edit, color: Colors.blue),
+  onPressed: () async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PelangganFormPage(pelanggan: p),
+      ),
+    );
+
+    if (result == true) {
+      loadPelanggan(); // ✅ AUTO REFRESH
+    }
+  },
+),
+
+    IconButton(
+      icon: const Icon(Icons.delete, color: Colors.red),
+      onPressed: () => deleteCustomerConfirm(p['id']), // ✅ HAPUS
+    ),
+  ],
+),
+
           );
         },
       ),
