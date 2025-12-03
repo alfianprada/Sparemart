@@ -37,6 +37,23 @@ class _ProdukFormPageState extends State<ProdukFormPage> {
     }
   }
 
+  void showErrorDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Gagal Menyimpan"),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("OK"),
+        ),
+      ],
+    ),
+  );
+}
+
+
   // ✅ PILIH GAMBAR
   Future<void> pickImage() async {
     final picker = ImagePicker();
@@ -223,16 +240,77 @@ Widget build(BuildContext context) {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              onPressed: loading ? null : saveProduct,
-              child: loading
-                  ? const CircularProgressIndicator(color: Colors.black)
-                  : Text(
-                      isEdit ? "Update Produk" : "Simpan Produk",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
+              onPressed: loading
+    ? null
+    : () async {
+        try {
+          // ✅ VALIDASI WAJIB ISI
+          if (nameCtrl.text.isEmpty) {
+            showErrorDialog("Nama produk wajib diisi");
+            return;
+          }
+
+          if (priceCtrl.text.isEmpty || stockCtrl.text.isEmpty) {
+            showErrorDialog("Harga dan stok wajib diisi");
+            return;
+          }
+
+          // ✅ VALIDASI ANGKA
+          final harga = double.tryParse(priceCtrl.text);
+          final stok = int.tryParse(stockCtrl.text);
+
+          if (harga == null || stok == null) {
+            showErrorDialog("Harga dan stok harus berupa angka");
+            return;
+          }
+
+          // ✅ WAJIB GAMBAR SAAT TAMBAH
+          if (!isEdit && imageBytes == null) {
+            showErrorDialog("Gambar produk wajib dipilih");
+            return;
+          }
+
+          setState(() => loading = true);
+
+          // ✅ UPLOAD GAMBAR JIKA ADA
+          if (imageBytes != null) {
+            final uploadedUrl = await SupabaseService.uploadImage(
+              imageBytes!,
+              '${DateTime.now().millisecondsSinceEpoch}.png',
+            );
+
+            if (uploadedUrl == null) {
+              showErrorDialog("Upload gambar gagal");
+              setState(() => loading = false);
+              return;
+            }
+
+            imageUrl = uploadedUrl;
+          }
+
+          final data = {
+            'name': nameCtrl.text,
+            'price': harga,
+            'stock': stok,
+            'image_url': imageUrl,
+          };
+
+          if (isEdit) {
+            await SupabaseService.updateProduct(widget.product!['id'], data);
+          } else {
+            await SupabaseService.addProduct(data);
+          }
+
+          if (!mounted) return;
+          setState(() => loading = false);
+          Navigator.pop(context, true);
+        } catch (e) {
+          setState(() => loading = false);
+          showErrorDialog("Gagal menyimpan produk:\n$e");
+        }
+      },
+
+child: const Text("Simpan Produk"),
             ),
           ),
         ],

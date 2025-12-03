@@ -58,12 +58,20 @@ class _PelangganFormPageState extends State<PelangganFormPage> {
     return;
   }
 
-  // ✅ VALIDASI NO TELEPON MINIMAL 10 DIGIT
+  // ✅ WAJIB DIISI
   if (phone.isEmpty) {
     showError("No. Telepon wajib diisi!");
     return;
   }
 
+  // ✅ HARUS ANGKA (TIDAK BOLEH HURUF)
+  final isOnlyNumber = RegExp(r'^[0-9]+$').hasMatch(phone);
+  if (!isOnlyNumber) {
+    showError("No. Telepon hanya boleh berisi angka!");
+    return;
+  }
+
+  // ✅ MINIMAL 10 DIGIT
   if (phone.length < 10) {
     showError("No. Telepon minimal 10 digit!");
     return;
@@ -92,6 +100,7 @@ class _PelangganFormPageState extends State<PelangganFormPage> {
 
   setState(() => loading = false);
 }
+
 
 
   @override

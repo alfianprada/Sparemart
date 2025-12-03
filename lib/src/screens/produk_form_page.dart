@@ -34,6 +34,23 @@ class _ProdukPageState extends State<ProdukPage> {
 
   }
 
+  void showErrorDialog(String message) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Terjadi Kesalahan"),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("OK"),
+        ),
+      ],
+    ),
+  );
+}
+
+
   Future<void> _confirmLogout(BuildContext context) async {
   final result = await showDialog<bool>(
     context: context,
@@ -68,7 +85,14 @@ class _ProdukPageState extends State<ProdukPage> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
-    await Supabase.instance.client.auth.signOut();
+    try {
+  await Supabase.instance.client.auth.signOut();
+} catch (e) {
+  Navigator.pop(context);
+  showErrorDialog("Logout gagal:\n$e");
+  return;
+}
+
 
     if (!context.mounted) return;
 
@@ -96,12 +120,18 @@ class _ProdukPageState extends State<ProdukPage> {
   }
 
   Future<void> loadProducts() async {
+  try {
     final data = await SupabaseService.getProducts();
     setState(() {
       produk = data;
       loading = false;
     });
+  } catch (e) {
+    loading = false;
+    showErrorDialog("Gagal memuat data produk:\n$e");
   }
+}
+
 
   Future<void> addOrEdit({Map<String, dynamic>? item}) async {
     final nameCtrl = TextEditingController(text: item?['name'] ?? '');
@@ -133,31 +163,58 @@ class _ProdukPageState extends State<ProdukPage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
           ElevatedButton(
-            onPressed: () async {
-              if (nameCtrl.text.isEmpty || priceCtrl.text.isEmpty) return;
-              if (bytes != null) {
-                imageUrl = await SupabaseService.uploadImage(
-                    bytes!, '${DateTime.now().millisecondsSinceEpoch}.png');
-              }
+  onPressed: () async {
+    try {
+      if (nameCtrl.text.isEmpty) {
+        showErrorDialog("Nama produk wajib diisi!");
+        return;
+      }
 
-              final data = {
-                'name': nameCtrl.text,
-                'price': double.parse(priceCtrl.text),
-                'stock': int.parse(stockCtrl.text),
-                'image_url': imageUrl
-              };
+      if (priceCtrl.text.isEmpty) {
+        showErrorDialog("Harga produk wajib diisi!");
+        return;
+      }
 
-              if (item == null) {
-                await SupabaseService.addProduct(data);
-              } else {
-                await SupabaseService.updateProduct(item['id'], data);
-              }
+      if (stockCtrl.text.isEmpty) {
+        showErrorDialog("Stok produk wajib diisi!");
+        return;
+      }
 
-              if (context.mounted) Navigator.pop(context);
-              loadProducts();
-            },
-            child: const Text("Simpan"),
-          ),
+      if (item == null && bytes == null) {
+        showErrorDialog("Gambar produk wajib diupload!");
+        return;
+      }
+
+      if (bytes != null) {
+        imageUrl = await SupabaseService.uploadImage(
+          bytes!,
+          '${DateTime.now().millisecondsSinceEpoch}.png',
+        );
+      }
+
+      final data = {
+        'name': nameCtrl.text,
+        'price': double.parse(priceCtrl.text),
+        'stock': int.parse(stockCtrl.text),
+        'image_url': imageUrl,
+      };
+
+      if (item == null) {
+        await SupabaseService.addProduct(data);
+      } else {
+        await SupabaseService.updateProduct(item['id'], data);
+      }
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      loadProducts();
+    } catch (e) {
+      showErrorDialog("Gagal menyimpan produk:\n$e");
+    }
+  },
+  child: const Text("Simpan"),
+),
+
         ],
       ),
     );
@@ -184,9 +241,14 @@ class _ProdukPageState extends State<ProdukPage> {
   );
 
   if (result == true) {
+  try {
     await SupabaseService.deleteProduct(id);
     loadProducts();
+  } catch (e) {
+    showErrorDialog("Gagal menghapus produk:\n$e");
   }
+}
+
 }
 
   @override
